@@ -1,4 +1,6 @@
-# This is the final and main project for a programming course at [Université de Montréal](https://admission.umontreal.ca/programmes/baccalaureat-en-informatique/)
+#Cafe API 
+
+This is the final and main project for a programming course at [Université de Montréal](https://admission.umontreal.ca/programmes/baccalaureat-en-informatique/)
 
 This API can be used by students to send requests to the University Cafe
 
