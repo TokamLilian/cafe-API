@@ -34,23 +34,68 @@ def chercher(repertoire, informations):
     return statut
 
 
+def process(comamnd, path):
+    print('La commande', comamnd)
+    print('Le chemin', path)
+
+
 def take_command(statut):
-    print('Entrer une comamde souhaité, saisisez -h ou -HELP pour voir le message d\'aide pour votre statut.')
-    command = input('>_').upper().strip()
+    #print(statut[0]) ##
+    while True:
+        print('');print('Entrer une commande souhaitée, saisissez -h ou -help pour voir le message d\'aide pour votre statut.')
+        command = input('>_').upper().strip()
 
-    if command == "-HELP" or command == '-H':
-        help = 'guides_' + statut[0]
-        callee = globals()[help]
-        callee()
+        if command == "-HELP" or command == '-H':
+            help = 'guides_' + statut[0]
+            callee = globals()[help]
+            callee()
 
-    if command == 'FIN': return None
+        if command == 'FIN': return None
+
+        #en fonction de la comamnde entrée, on procède à l'execution, et on demande à l'utilisateur si il a finit
+        if "/" not in command: break
+        command = command.split('/')
+
+        for _ in range (len(command)):
+            word = command[0]
+            command.remove(word)
+            word = word.strip()
+            command.append(word)
+
+        instruction = command[0]
+
+        if ' ' in instruction :break
+
+        else:
+            command.remove(instruction)
+            if len(command) < 2: break
+            if command[0] != 'API':
+                print('Besoin d\'un chemin origin de l\'API pour continuer') 
+                break
+
+            if command[1] not in ['MENU', 'COMMANDES', 'COMPTES']:
+                print('Le chemin spécifé n\'est pas correct')
+                break
+
+            if instruction == 'POST' and command[1] != 'COMMANDES': 
+                print('Vous ne pouvez que poster des commandes.')
+                break
+            
+            if statut[0] != "admin" and command[1] == 'COMPTES':
+                print('Vous n\'avez pas le droit d\'acceder aux', command[1])
+                break
+            
+            if statut[0] == "public" and (instruction == 'GET' and command[1] == 'COMMANDES' or instruction == 'PUT'):
+                print('Vous n\'avez pas droit à cette fonctionalité')
+                break
+            
+            if instruction == 'PUT' and command[1] == 'COMMANDES': 
+                print('Impossible de faire cette action.')
+                break
+
+            process(instruction, command)
 
     take_command(statut)
-
-    #en fonction de la comamnde entrée, on procède à l'execution, et on demande à l'utilisateur si il a finit
-
-    command = command.split('/')
-    intruction = command [0]
 
 def init(matricule, mot_passe):
 
