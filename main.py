@@ -23,11 +23,11 @@ def chercher(repertoire, informations):
                 if informations[1] == text[3].strip(): 
 
                     user_role = []
-                    for word in [text[5], text[6]]:
+                    for word in [text[5], text[6], text[0]]:
                         word = word.strip()
                         user_role.append(word)
 
-                    return user_role #[role, actif]
+                    return user_role #[role, actif, matricule]
                 
                 else: statut = 'mdp_error';  return statut
     
@@ -36,12 +36,51 @@ def chercher(repertoire, informations):
 
 def GET(path):
 #cette fonction affiche la liste d'une categorie
+    last = len(path) - 1
+    key = path[last]
+    get_items(key)
+
     pass
 
 
-def POST(path):
+def POST(matricule, commande):
 #cette fonction crée une commande
-    pass
+
+    prix_total = 0
+    for item in commande.split(" "):
+        item = item.split('x')
+        quantite = int(item[0])
+
+        item_id = item[1]
+        #info = get_items(item_id)
+
+        #if info["disponible"] == 'false' : 
+        #    print('Cet article n\'est pas disponible')
+        #    return None
+        
+        #unit_price = info["prix"]
+        unit_price = 2.5    ##
+        prix_total += unit_price * quantite
+
+    with open(commandes) as order_file:
+        for line in order_file:
+            pass
+
+        last_line = line
+        start_index = int(last_line[0])
+        order_file.close()
+          
+    orders= open(commandes, "a") 
+
+    date = "2023-04-08"
+
+    order_line = str(start_index+1) + ' | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total)
+    
+    #orders.write('\n')
+    #orders.write(order_line)
+    orders.close
+
+    ##read_orders = open(commandes, "r"); print(read_orders.read()) ##
 
 
 def PUT(path):
@@ -49,12 +88,19 @@ def PUT(path):
     pass
 
 
-def process(comamnd, path):
-    print('La commande', comamnd)   ##
+def process(instruction, path, matricule):
+    print('La commande', instruction)   ##
     print('Le chemin', path)        ##
 
-    callee = globals()[comamnd]
-    callee(path)
+    callee = globals()[instruction]
+
+    if instruction == 'POST':
+        last = len(path) - 1
+        commande = path[last]
+           
+        callee(matricule, commande)
+    else:
+        callee(path)
 
     return 
 
@@ -117,7 +163,7 @@ def take_command(statut):
                 print('Impossible de faire cette action.')
                 break
 
-            process(instruction, command)
+            process(instruction, command, statut[2])
 
     take_command(statut)
 
@@ -158,7 +204,13 @@ def get_arguments():
 #get_arguments()
 
 
-def get_items():
+def get_items(key):
+
+    def get_info(key, sub_category_items):
+        for infomation in sub_category_items: 
+            if key == infomation["id"]:
+                print(infomation);print("")
+        #information is the sub_category_item information
 
     with open(menu) as json_file:
         the_menu = json.load(json_file)
@@ -166,49 +218,26 @@ def get_items():
         for item_name in the_menu:
             print('Type', item_name)                             #les differents type d'items
             categories = the_menu[item_name]                       #les categories pour chaque type
-            #print('on a', categories)
-            for category_name in categories:                          
-                #print(sub_category_name)
-                sub_category = categories[category_name]              #les sous-categories pour chaque categories de type
-                #print(sub_category)
 
-                for sub_category_name in sub_category:
-                    i = 0
-                    #print(sub_category_name)
-                    try:
-                        sub_category_items = sub_category[sub_category_name]["items"]      #les types d'items sous chaque sous-categories
+            try:                            #fruit et muffin n'ont pas de sous categories, donc on va acceder à "items" directement
+                sub_category_items = categories["items"]
+                get_info(key, sub_category_items)
+            except: 
 
-                    except TypeError: 
-                        try:                                ##fruit et muffin n'ont pas de sous categories, donc on va acceder à "items" directement
-                            sub_category_items = sub_category["items"]
+                for category_name in categories:                          
+                    print('categorie',category_name)
+                    sub_category = categories[category_name]              #les sous-categories pour chaque categories de type
+
+                    for sub_category_name in sub_category:
+                        print('sous-categorie',sub_category_name)##
+                        try:
+                            sub_category_items = sub_category[sub_category_name]["items"]      #les types d'items sous chaque sous-categories
+
+                        except: 
+                                sub_category_items = sub_category["items"]
                         
-                        except:
-                            sub_category_items = sub_category
-                        
-                    #print(sub_category_items)
-                    while i <= len(sub_category_items):
-                    #for line in sub_category_items:                  #line is "items", we can use "sub_category_item.get("items")
-                        #try:
-                        #category_info = sub_category_items["items"]
-                        category_info = sub_category_items
-                    #    except:
-                        #certaines categories n'ont pas de sous-categories,
-                        #on va acceder aux informations directement
-                        #    category_info = sub_category_items
-
-                            #for infomation in category_info:
-                            #    print(infomation)
-                            #    i += 1
-
-                        #print(category_info)                        #le block d'informations d'un type d'item
-                    
-                        for infomation in category_info:             #information is the sub_category_item information
-                            #print(category_info[infomation])
-                            print(infomation)
-                            i += 1
-
-                        break
-                    #i+=1
+                        get_info(key, sub_category_items)
+                            
                     print("")
-                   
+           
             print("")
