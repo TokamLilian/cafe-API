@@ -36,12 +36,10 @@ def chercher(repertoire, informations):
 
 def GET(path):
 #cette fonction affiche la liste d'une categorie
-    last = len(path) - 1
-    key = path[last]
+    key_index = path.index('menu') + 1
+    key = path[key_index]
     get_items(key)
-
-    pass
-
+  
 
 def POST(matricule, commande):
 #cette fonction crée une commande
@@ -52,14 +50,13 @@ def POST(matricule, commande):
         quantite = int(item[0])
 
         item_id = item[1]
-        #info = get_items(item_id)
+        info = get_items(item_id)
 
-        #if info["disponible"] == 'false' : 
-        #    print('Cet article n\'est pas disponible')
-        #    return None
+        if info["disponible"] == 'false' : 
+            print('Cet article n\'est pas disponible')
+            return None
         
-        #unit_price = info["prix"]
-        unit_price = 2.5    ##
+        unit_price = info["prix"]
         prix_total += unit_price * quantite
 
     with open(commandes) as order_file:
@@ -206,38 +203,79 @@ def get_arguments():
 
 def get_items(key):
 
-    def get_info(key, sub_category_items):
+    def get_id_info(key, sub_category_items):
         for infomation in sub_category_items: 
-            if key == infomation["id"]:
-                print(infomation);print("")
         #information is the sub_category_item information
+            if key == infomation["id"]:
+                return infomation
+            
+        return False
+
+    def print_key(sub_category):
+        for line in sub_category:
+            msg = str(line["id"]) +" "+ str(line["nom"])   
+            print (msg)     
 
     with open(menu) as json_file:
         the_menu = json.load(json_file)
 
-        for item_name in the_menu:
-            print('Type', item_name)                             #les differents type d'items
-            categories = the_menu[item_name]                       #les categories pour chaque type
+        if key == 'items' or type(key)== int :
+            way = the_menu
+            if key == 'items':
+                print('menu') 
+
+        else:
+            for category in the_menu:
+
+                if key == category :
+                    way = the_menu[key]
+                    print(key)
+                    break
+
+                elif key in the_menu[category]:
+                    way = the_menu[category][key]
+                    print(key)
+                    break
+
+        #else: print('Chemin non spécifé'); return None
+
+        for item_name in way:                              #les differents type d'items
+            if item_name!='items' and type(key)!=int :print(item_name)
+            categories = way[item_name]                                            #les categories pour chaque type
 
             try:                            #fruit et muffin n'ont pas de sous categories, donc on va acceder à "items" directement
                 sub_category_items = categories["items"]
-                get_info(key, sub_category_items)
+                print_key(sub_category_items)
+
+                if type(key)== int:get_id_info(key, sub_category_items)
+
             except: 
+                try:
+                    for category_name in categories:  
+                                                 
+                        sub_category = categories[category_name]              #les sous-categories pour chaque categories de type
+                        if type(key)!=int:print(category_name)
 
-                for category_name in categories:                          
-                    print('categorie',category_name)
-                    sub_category = categories[category_name]              #les sous-categories pour chaque categories de type
+                        for sub_category_name in sub_category:
+                            if category_name!='items' and sub_category_name != 'items': print(sub_category_name)##
+                            try:
+                                sub_category_items = sub_category[sub_category_name]["items"]      #les types d'items sous chaque sous-categories
 
-                    for sub_category_name in sub_category:
-                        print('sous-categorie',sub_category_name)##
-                        try:
-                            sub_category_items = sub_category[sub_category_name]["items"]      #les types d'items sous chaque sous-categories
-
-                        except: 
-                                sub_category_items = sub_category["items"]
-                        
-                        get_info(key, sub_category_items)
+                            except: 
+                                    sub_category_items = sub_category["items"]
                             
-                    print("")
-           
+                            if type(key) == int:
+                                found = get_id_info(key, sub_category_items)
+                                if found != False:
+                                    return found
+                                
+                            else: print_key(sub_category_items)
+                                
+                        print("")
+                except:
+                    sub_category_items = way["items"]
+                    print_key(sub_category_items)
+        
             print("")
+
+get_items(3)
