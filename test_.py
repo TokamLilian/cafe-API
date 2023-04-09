@@ -1,4 +1,5 @@
 from main import *
+from random import *
 
 def test():
 
@@ -32,12 +33,51 @@ def test():
     
 
     def test_take_command():
-        les_statuts = [ ['staff', 1], ['admin', 1], ['public', 1] ]
+        les_statuts = [ ['staff', 1,'20230129'], ['admin', 1,'20230129'], ['public', 1,'20230129'] ]
 
         for statut in les_statuts:
             take_command(statut)
 
-    test_take_command()
+    #test_take_command()
+
+
+    def test_process():
+        command = 'POST'
+        path = ['api', 'commandes', '3x1 1x22']
+        statut = '20230129'
+        process(command, path, statut)
+
+    #test_process()
+
+
+    def test_POST():
+        path = ['API', 'COMMANDES', '5X4 3x6']
+        statut = ['public', 1, '20230129']
+        prix = 4
+        POST(path,statut, prix)
+
+    #test_POST()
+
+    def test_get_items1():
+        number = 40
+        indices = []
+        index = ""
+        
+        while len(indices) < number:
+            index = int(40*random())
+            if index not in indices:
+                indices.append(index)
+                print(index, get_items(index))
+
+    def test_get_items2():
+        ma_list = ['fruit', 'boisson_chaude', 'muffin', 'the', 'viennoiserie', 'lait', 'chocolat', 'wrap', 'boisson','items','croissant','boisson_froide']
+        for nom in ma_list:
+            print('on a',nom)
+            get_items(nom)
+            print("-"*30)
+
+    #test_get_items1()
+    #test_get_items2()
+    
 
 test()
-        
