@@ -51,12 +51,15 @@ def get_other(name,key):
                 print(line)
 
 
-def get_menu(key):
+def get_menu(key, replace, status):
 
     def get_id_info(key, sub_category_items):
         for infomation in sub_category_items: 
         #information is the sub_category_item information
             if key == infomation["id"]:
+
+                if replace: infomation["disponible"] = status
+
                 return infomation
             
         return False
@@ -155,7 +158,7 @@ def GET(path):
         id = int(key)
         if name == 'menu':
             if path[last-1] != 'items': print('Chemin specifié incorrect'); return None     ##pour s'assurer qu'on veut get items/id
-            info = get_menu(id)
+            info = get_menu(id,replace=False, status=None)
 
             if info['disponible'] == True:
                 disponibilite = 'disponible'
@@ -176,7 +179,7 @@ def GET(path):
 
             else:    
                 key = path[2]
-                get_menu(key)
+                get_menu(key, replace=False, status=None)
         
 
 def POST(matricule, commande):
@@ -186,10 +189,10 @@ def POST(matricule, commande):
     for item in commande.split(" "):
         try:
             item = item.split('x')
-            quantite = int(item[0])
+            quantite = int(item[1])
 
-            item_id = int(item[1])
-            info = get_menu(item_id)
+            item_id = int(item[0])
+            info = get_menu(item_id,replace=False, status=None)
 
             if info["disponible"] == False : 
                 print('L\'item', item_id, 'n\'est pas disponible')
@@ -223,7 +226,51 @@ def POST(matricule, commande):
 
 def PUT(path):
 #cette fonction met à jour la valeur du champ d'un chemin donné
-    pass
+    name = path[1]
+    dir = globals()[name]    #menu or comptes
+    file = open(dir, "r", encoding= 'utf-8')
+    try:
+        id_index = path.index("items") + 1
+    except: 
+            try:   
+                id_index = path.index("comptes") + 1
+            except: return None
+
+    try:
+        id = int(path[id_index])
+        field_status_index = id_index + 1
+        field_status = path[field_status_index]
+
+    except: return None
+
+    if name == "menu":
+        try:
+            field_status = field_status.split("=")
+            if field_status[1] == '1': status = True
+            elif field_status[1] == '0': status = False 
+            else: return None
+
+            get_menu(id, replace=True, status=status)
+        except: return None
+
+    else:
+        field_status = [field_status.strip('[]')]
+        try:
+            if field_status[0] == 'actif': status = 1
+            elif field_status[0] == 'inactif': status = 0
+            else: return None
+        except: return None
+
+        for line in file:
+            line = line.split("|")
+            if id == int(line[0].strip()):
+                end_index = len(line) - 1
+                line[end_index] = status
+                break
+
+    file.close()
+    print('Mise à jour éffectuée')
+    return
 
 
 def process(instruction, path, matricule):
@@ -273,12 +320,16 @@ def take_command(statut):
         instruction = instruction.upper()
         if ' ' in instruction or instruction not in ['GET', 'POST', 'PUT']:print('Instruction',instruction,'non valide');break
 
-        if instruction == 'POST':
-            part_command = command[1].split(" ")
+        if instruction == 'POST' or instruction == 'PUT':
+            if instruction == 'POST':index = 1
+            elif command[1] == 'menu': index = 3
+            else: index = 2
+
+            part_command = command[index].split(" ")
             rem = part_command[0]
             part_command.remove(rem)
             part_command = " ".join(part_command)
-            command.remove(command[1])
+            command.remove(command[index])
             command.append(rem) 
             command.append(part_command) 
 
@@ -318,10 +369,10 @@ def init(matricule, mot_passe):
 
     if statut == 'mdp_error': print('Mauvais mot de passe')
 
-    elif statut == 'inexisting_user': print('Utilisateur non touvé')
+    elif statut == 'inexisting_user': print('Utilisateur non trouvé')
 
     else:
-        print('Vous êtes connecté');print("")
+        print('Vous êtes connecté(e)');print("")
         
         if statut[1] == '1': 
             take_command(statut)
