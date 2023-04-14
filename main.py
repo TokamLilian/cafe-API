@@ -36,7 +36,7 @@ def chercher(repertoire, informations):
 
 def get_other(name,key):
 #cette fontion parcour les comptes ou commandes pour l'utilisateur
-    #with open(comptes) as accounnt_file:
+    
         dir = globals()[name]
         file = open(dir, "r", encoding= 'utf-8')
         for line in file:
@@ -58,7 +58,7 @@ def get_menu(key, replace, status):
         #information is the sub_category_item information
             if key == infomation["id"]:
 
-                if replace: infomation["disponible"] = status
+                if replace: infomation["disponible"] = status; return way
 
                 return infomation
             
@@ -69,7 +69,7 @@ def get_menu(key, replace, status):
             msg = str(line["id"]) +" "+ str(line["nom"])   
             print (msg)     
 
-    with open(menu) as json_file:
+    with open(menu, encoding='utf-8') as json_file:
         the_menu = json.load(json_file)
         way = ""
         if key == 'items' or type(key)== int :
@@ -228,7 +228,6 @@ def PUT(path):
 #cette fonction met à jour la valeur du champ d'un chemin donné
     name = path[1]
     dir = globals()[name]    #menu or comptes
-    file = open(dir, "r", encoding= 'utf-8')
     try:
         id_index = path.index("items") + 1
     except: 
@@ -248,27 +247,38 @@ def PUT(path):
             field_status = field_status.split("=")
             if field_status[1] == '1': status = True
             elif field_status[1] == '0': status = False 
-            else: return None
+            else: print('Disponible doit être = 1 ou 0');return None
 
-            get_menu(id, replace=True, status=status)
+            new_menu = get_menu(id, replace=True, status=status)
+            with open(dir, "w", encoding='UTF-8') as the_menu:
+                json.dump(new_menu, the_menu, indent=4, ensure_ascii=False)
+
         except: return None
 
     else:
+        file = open(dir, "r+", encoding= 'utf-8')
+        accounts_list = []
         field_status = [field_status.strip('[]')]
         try:
             if field_status[0] == 'actif': status = 1
             elif field_status[0] == 'inactif': status = 0
-            else: return None
+            else: print('Le statut doit etre soit actif ou inactif.');return None
         except: return None
 
         for line in file:
-            line = line.split("|")
-            if id == int(line[0].strip()):
+            if id == int(line.split("|")[0].strip()):
+                line = line.split("|")
                 end_index = len(line) - 1
-                line[end_index] = status
-                break
+                line[end_index] = ' '+str(status)+'\n'
+                line = "|".join(line)
 
-    file.close()
+            accounts_list.append(line)
+
+        with open(dir, "w", encoding='UTF-8') as accounts:
+            for user in accounts_list:
+                accounts.write(user)
+
+        file.close()
     print('Mise à jour éffectuée')
     return
 
