@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from getpass import *
 
 from message_section import *
 #intro_Section()
@@ -37,19 +38,24 @@ def chercher(repertoire, informations):
 def get_other(name,key):
 #cette fontion parcour les comptes ou commandes pour l'utilisateur
     
-        dir = globals()[name]
-        file = open(dir, "r", encoding= 'utf-8')
-        for line in file:
-            try:
-                id = int(key)
-                text = line.split('|')
-                matricule = text[0].strip() 
+    dir = globals()[name]
+    file = open(dir, "r", encoding= 'utf-8')
 
-                if id == int(matricule):
-                    print(line);break
-            except:
-                print(line)
+    if key.isdigit(): id = int(key)
+                                         
+    elif key != name: print('«'+key+'»','invalide'); return None
+    #lorsqu'il n'y a pas d'entier qui a été spécifié
 
+    for line in file:
+        text = line.split('|')
+        matricule = text[0].strip() 
+        try:
+            if id == int(matricule):
+                print(line); return None
+        except:
+            print(line)
+
+    type(key) == int and print(name[:-1], id,'n\'existe pas')
 
 def get_menu(key, replace, status):
 
@@ -157,7 +163,7 @@ def GET(path):
     try:
         id = int(key)
         if name == 'menu':
-            if path[last-1] != 'items': print('Chemin specifié incorrect'); return None     ##pour s'assurer qu'on veut get items/id
+            if path[path.index(name)+1] != 'items': print('Chemin specifié incorrect'); return None     ##pour s'assurer qu'on veut get items/id
             info = get_menu(id,replace=False, status=None)
 
             if info['disponible'] == True:
@@ -170,7 +176,7 @@ def GET(path):
             get_other(name, id)
 
     except:
-            if len(path) > 2 and name != 'menu' or key== '': 
+            if name == 'menu' and key != 'items' or key== '':            #il n'y a que 'menu' qui prend des chaines de caracteres comme chemin
                 print('Chemin specifié incorrect')
                 return None
             
@@ -216,10 +222,10 @@ def POST(matricule, commande):
 
     date = "2023-04-08"
 
-    order_line = str(start_index+1) + ' | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total)
+    order_line = str(start_index+1) + ' | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + '\n'
     
-    #orders.write('\n')
-    #orders.write(order_line)
+    orders.write('\n')
+    orders.write(order_line)
     print("");print('Commande postée avec succès')
     orders.close
 
@@ -240,24 +246,29 @@ def PUT(path):
         field_status_index = id_index + 1
         field_status = path[field_status_index]
 
-    except: return None
+    except: print('Veuillez entrer un ID valide');return None
 
     if name == "menu":
         try:
             field_status = field_status.split("=")
+            if field_status[0] != 'disponible':print('«'+field_status[0]+'»','Invalide');return None
+
             if field_status[1] == '1': status = True
             elif field_status[1] == '0': status = False 
             else: print('Disponible doit être = 1 ou 0');return None
 
             new_menu = get_menu(id, replace=True, status=status)
-            with open(dir, "w", encoding='UTF-8') as the_menu:
-                json.dump(new_menu, the_menu, indent=4, ensure_ascii=False)
+            if new_menu != None:
+                with open(dir, "w", encoding='UTF-8') as the_menu:
+                    json.dump(new_menu, the_menu, indent=4, ensure_ascii=False)
+            else: print('Aucune modification possible')
 
-        except: return None
+        except: print('Disponible doit être = 1 ou 0');return None
 
     else:
         file = open(dir, "r+", encoding= 'utf-8')
         accounts_list = []
+        edit = False
         field_status = [field_status.strip('[]')]
         try:
             if field_status[0] == 'actif': status = 1
@@ -271,15 +282,18 @@ def PUT(path):
                 end_index = len(line) - 1
                 line[end_index] = ' '+str(status)+'\n'
                 line = "|".join(line)
+                print('Mise à jour éffectuée'); edit = True
 
             accounts_list.append(line)
 
-        with open(dir, "w", encoding='UTF-8') as accounts:
-            for user in accounts_list:
-                accounts.write(user)
+        if edit:
+            with open(dir, "w", encoding='UTF-8') as accounts:
+                for user in accounts_list:
+                    accounts.write(user)
 
-        file.close()
-    print('Mise à jour éffectuée')
+            file.close()
+        else: print(id, 'N\'existe pas')
+
     return
 
 
@@ -295,6 +309,45 @@ def process(instruction, path, matricule):
         callee(path)
 
     return 
+
+
+def verification_command(command):
+
+    command = command.split('/')
+
+    for _ in range (len(command)):
+        word = command[0]
+        command.remove(word)
+        word = word.strip()
+        command.append(word)
+
+    instruction = command[0]
+
+    command.remove(instruction)
+        
+    if ' ' in instruction or instruction not in ['GET', 'POST', 'PUT']:
+        print('Instruction',instruction,'non valide'); return None
+
+    if instruction == 'POST' or instruction == 'PUT':
+        if instruction == 'POST':index = 1
+        elif command[1] == 'menu': index = 3
+        else: index = 2
+
+        try:
+            part_command = command[index].split(" ")
+            if part_command ==[''] : print('Besoin d\'une valeur pour', instruction); return None
+        except:
+            print('Chemin non spécifié')
+            return None
+
+        rem = part_command[0]
+        part_command.remove(rem)
+        part_command = " ".join(part_command)
+        command.remove(command[index])
+        command.append(rem) 
+        command.append(part_command) 
+
+    return [instruction, command]
 
 
 def take_command(statut):
@@ -314,42 +367,19 @@ def take_command(statut):
             break
 
         if command == 'FIN' or command == 'fin': return None
+        if "/" not in command: print('Entrez une commande valide');break
 
-        if "/" not in command: break
-        command = command.split('/')
+        line = verification_command(command)
+        if line == None: break
+        instruction = line[0]
+        command = line[1]
 
-        for _ in range (len(command)):
-            word = command[0]
-            command.remove(word)
-            word = word.strip().lower()
-            command.append(word)
-
-        instruction = command[0]
-
-        command.remove(instruction)
-        instruction = instruction.upper()
-        if ' ' in instruction or instruction not in ['GET', 'POST', 'PUT']:print('Instruction',instruction,'non valide');break
-
-        if instruction == 'POST' or instruction == 'PUT':
-            if instruction == 'POST':index = 1
-            elif command[1] == 'menu': index = 3
-            else: index = 2
-
-            part_command = command[index].split(" ")
-            rem = part_command[0]
-            part_command.remove(rem)
-            part_command = " ".join(part_command)
-            command.remove(command[index])
-            command.append(rem) 
-            command.append(part_command) 
-
-        if len(command) < 2: break
         if command[0] != 'api':
-            print('Besoin d\'un chemin origin de l\'API pour continuer') 
+            print('Besoin d\'un chemin origin de \"api\" pour continuer') 
             break
 
-        if command[1] not in ['menu', 'commandes', 'comptes']:
-            print('Le chemin spécifé n\'est pas correct')
+        if len(command) < 2 or command[1] not in ['menu', 'commandes', 'comptes']:
+            print('Le chemin spécifié n\'est pas correct')
             break
 
         if instruction == 'POST' and command[1] != 'commandes': 
@@ -392,7 +422,7 @@ def init(matricule, mot_passe):
 
 def get_inputs():
     matricule = input('Entrer votre matricule: ').strip()
-    mot_passe = input('Entrer votre mot de passe: ')
+    mot_passe = getpass('Entrer votre mot de passe: ')
     init(matricule, mot_passe)
 
 
