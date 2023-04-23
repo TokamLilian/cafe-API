@@ -20,7 +20,7 @@ def test():
             print(chercher(comptes, [matricule, mot_passe]))
 
         def test_chercher4():
-            matricule = '20250710'                          #deux étudiants ont le meme matricule
+            matricule = '20250710'
             mot_passe = 'rlPass_30'
             print(chercher(comptes, [matricule, mot_passe]))
 
@@ -33,12 +33,12 @@ def test():
     
 
     def test_take_command():
-        les_statuts = [ ['staff', 1,'20230129'], ['admin', 1,'20230129'], ['public', 1,'20230129'] ]
+        les_statuts = [  ['admin', 1,'20230129'], ['staff', 1,'20230129'], ['public', 1,'20230129'] ]
 
         for statut in les_statuts:
             take_command(statut)
 
-    #test_take_command()
+    test_take_command()
 
 
     def test_process():
@@ -51,10 +51,10 @@ def test():
 
 
     def test_POST():
-        path = ['API', 'COMMANDES', '5X4 3x6']
+        path = ['API', 'COMMANDES', '5X4 3x6 3x4 7x1 28x3']
         statut = ['public', 1, '20230129']
         prix = 4
-        POST(path,statut, prix)
+        POST(statut[2], path[2])
 
     #test_POST()
 
@@ -67,17 +67,17 @@ def test():
             index = int(40*random())
             if index not in indices:
                 indices.append(index)
-                print(index, get_items(index))
+                print(index, get_menu(index))
 
     def test_get_items2():
         ma_list = ['fruit', 'boisson_chaude', 'muffin', 'the', 'viennoiserie', 'lait', 'chocolat', 'wrap', 'boisson','items','croissant','boisson_froide']
         for nom in ma_list:
             print('on a',nom)
-            get_items(nom)
+            get_menu(nom)
             print("-"*30)
 
     #test_get_items1()
     #test_get_items2()
-    
+
 
 test()
