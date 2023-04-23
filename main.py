@@ -55,7 +55,8 @@ def get_other(name,key):
         except:
             print(line)
 
-    type(key) == int and print(name[:-1], id,'n\'existe pas')
+    key.isdigit() and print(name[:-1], id,'n\'existe pas')
+    
 
 def get_menu(key, replace, status):
 
@@ -192,39 +193,52 @@ def POST(matricule, commande):
 #cette fonction crée une commande
 
     prix_total = 0
-    for item in commande.split(" "):
+    commande = commande.split(" ")
+    unavailable = []                                                    #pour la liste des items non disponible
+
+    def append_unavailable(item):
+        item = "x".join(item)
+        unavailable.append(item)
+
+    for item in commande:
         try:
+
             item = item.split('x')
             quantite = int(item[1])
-
             item_id = int(item[0])
+
             info = get_menu(item_id,replace=False, status=None)
 
             if info["disponible"] == False : 
                 print('L\'item', item_id, 'n\'est pas disponible')
+                append_unavailable(item)
             
             else:
                 unit_price = info["prix"]
                 prix_total += unit_price * quantite
+
         except:
+            append_unavailable(item)
             print('Mauvaise commande en',"x".join(item))
 
     if prix_total == 0: print('Commande non postée');return None
     prix_total = round(prix_total, 2)
     with open(commandes) as order_file:
         for line in order_file:
-            pass
+            pass                                               #pour recuperer la dernière ligne
 
         last_line = line
-        start_index = int(last_line[0])
+        start_index = int(last_line.split('|')[0]) + 1         #le numero de la commande à poster
           
     orders= open(commandes, "a") 
 
     date = "2023-04-08"
+    for items in unavailable:
+        commande.remove(items)
 
-    order_line = str(start_index+1) + ' | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + '\n'
+    commande = ", ".join(commande)
+    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + '\n'
     
-    orders.write('\n')
     orders.write(order_line)
     print("");print('Commande postée avec succès')
     orders.close
@@ -232,6 +246,11 @@ def POST(matricule, commande):
 
 def PUT(path):
 #cette fonction met à jour la valeur du champ d'un chemin donné
+
+    def status_error():
+        print('Le statut doit être soit actif ou inactif.')
+        return None
+
     name = path[1]
     dir = globals()[name]    #menu or comptes
     try:
@@ -270,14 +289,16 @@ def PUT(path):
         accounts_list = []
         edit = False
         field_status = [field_status.strip('[]')]
+
         try:
             if field_status[0] == 'actif': status = 1
             elif field_status[0] == 'inactif': status = 0
-            else: print('Le statut doit etre soit actif ou inactif.');return None
-        except: return None
+            else: status_error()
 
-        for line in file:
-            if id == int(line.split("|")[0].strip()):
+        except: status_error()
+
+        for line in file:                                                       #pour trouver l"ID specifié et
+            if id == int(line.split("|")[0].strip()):                           #modifier le champ souhaité
                 line = line.split("|")
                 end_index = len(line) - 1
                 line[end_index] = ' '+str(status)+'\n'
@@ -286,8 +307,8 @@ def PUT(path):
 
             accounts_list.append(line)
 
-        if edit:
-            with open(dir, "w", encoding='UTF-8') as accounts:
+        if edit:                                                                #on réécrit le contenu de accounts_list
+            with open(dir, "w", encoding='UTF-8') as accounts:                  #dans comptes.csv s'il y a eu une modification
                 for user in accounts_list:
                     accounts.write(user)
 
@@ -360,7 +381,7 @@ def take_command(statut):
         print('')
         command = input('>_').strip()
 
-        if command == "-help" or command in '-h':
+        if command == "-help" or command == '-h':
             help = 'guides_' + statut[0]
             callee = globals()[help]
             callee()
