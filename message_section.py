@@ -11,6 +11,8 @@ def intro_Section():
                'PUBLIC, STAFF AND ADMIN', 
                'EACH CAN PERFORM DIFFERENT TASKS',
                '',
+               'PLEASE LOGIN WITH YOUR IDENTIFICATION',
+               'NUMBER AND PASSWORD',
                'IF YOUR ACCOUNT IS NOT ACTIVE,',
                'PLEASE CONTACT THE ADMINISTRATION'
             ]
@@ -35,6 +37,7 @@ def intro_Section():
 
 
 def guides_public():
+    seperator = '-'*70
     guides= [   'ALL USERS CAN USE THE FOLLOWING', '',
         
                 'TO VIEW THE LIST OF ALL ITEMS,',
@@ -63,6 +66,8 @@ def guides_public():
     for line in guides:
         print(line)
 
+    print(seperator)
+
 
 def guides_staff():
 
@@ -78,7 +83,7 @@ def guides_staff():
 
                     'TO SET THE AVAILABILITY OR NOT OF AN ITEM,',
                     'USE THE COMMAND: \"PUT /api/menu/items/{Item id} disponible={Availability}\"',
-                    '--Where \"Availability\" can be either 1 to mark the item as available'
+                    '--Where \"Availability\" can be either 1 to mark the item as available',
                     'or 0 to mark the item as unavailable',
     ]
 
@@ -105,5 +110,3 @@ def guides_admin():
     ]
 
     for line in guides: print(line)
-
-guides_admin()
