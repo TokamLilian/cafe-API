@@ -68,6 +68,7 @@ def get_other(name,key):
     
 
 def get_menu(key, replace, status):
+#cette fonction parcour tout les elements d'un dictionnaire
 
     def get_id_info(key, sub_category_items):
     #cette fonction retourne les information de l'item par son ID
@@ -199,7 +200,8 @@ def GET(path):
 
             else:    
                 key = path[2]
-                get_menu(key, replace=False, status=None)
+                info = get_menu(key, replace=False, status=None)
+                info != None and print(info)
         
 
 def POST(matricule, commande):
@@ -208,6 +210,7 @@ def POST(matricule, commande):
     prix_total = 0
     commande = commande.split(" ")
     unavailable = []                                                    #pour la liste des items non disponible
+    break_line = '\n'
 
     def append_unavailable(item):
         item = "x".join(item)
@@ -238,6 +241,7 @@ def POST(matricule, commande):
     prix_total = round(prix_total, 2)
     with open(commandes) as order_file:
         for line in order_file:
+            #if break_line not in line: line = line.strip() + break_line      #on s'assure qu'il y a un saut de ligne à la fin
             pass                                               #pour recuperer la dernière ligne
 
         last_line = line
@@ -250,8 +254,9 @@ def POST(matricule, commande):
         commande.remove(items)
 
     commande = ", ".join(commande)
-    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + '\n'
-    
+    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + break_line
+
+    start_index == 4 and orders.write(break_line)                    #pour la premiere modification
     orders.write(order_line)
     print("");print('Commande postée avec succès')
     orders.close
@@ -287,15 +292,16 @@ def PUT(path):
 
             if field_status[1] == '1': status = True
             elif field_status[1] == '0': status = False 
-            else: print('Disponible doit être = 1 ou 0');return None
+            else: print('Disponible doit être =1 ou 0');return None
 
             new_menu = get_menu(id, replace=True, status=status)
             if new_menu != None:
+                print('Mise à jour éffectuée')
                 with open(dir, "w", encoding='UTF-8') as the_menu:
                     json.dump(new_menu, the_menu, indent=4, ensure_ascii=False)
             else: print('Aucune modification possible')
 
-        except: print('Disponible doit être = 1 ou 0');return None
+        except: print('Disponible doit être =1 ou 0');return None
 
     else:
         file = open(dir, "r+", encoding= 'utf-8')
@@ -390,6 +396,7 @@ def verification_command(command):
 
 
 def take_command(statut):
+#cette fonction scinde la command de l'utilisateur recupere aussi le mots-clé
     
     print("Entrer une commande souhaitée ou Entrer FIN pour terminer l'execution.")
 
@@ -435,6 +442,7 @@ def take_command(statut):
 
 
 def init(matricule, mot_passe):
+#cette fonction procède à la saisi de la commande si l'utilisateur est actif et s'arrete sinon
 
     statut = chercher(comptes, [matricule, mot_passe])
 
@@ -450,12 +458,15 @@ def init(matricule, mot_passe):
 
 
 def get_inputs():
+#cette fonction recupère les entrés pour le login
     matricule = input('Entrer votre matricule: ').strip()
     mot_passe = input('Entrer votre mot de passe: ')
     init(matricule, mot_passe)
 
 
 def get_arguments():
+#cette fonction recupère les arguments qui vont etre utilisés pour se connecter à l'API
+#sinon, on demande à l'utilisateur de les entrer
     if len(sys.argv) == 3:
         try:
         #ces arguments vont etre utilisés pour se connecter à l'API
@@ -559,8 +570,8 @@ def test():
             assert verification_command(command) == ['PUT', ['api', 'menu', 'items', '25', 'disponible=1']]
 
         def test_verification_None():
-            command = 'get /api/menu/cafe/items'
-            assert verification_command(command) == 'Instruction get non valide'
+            command = 'put /api/menu/cafe/items'
+            assert verification_command(command) == 'Instruction put non valide'
 
 
         test_verification_GET_menu()
@@ -572,4 +583,4 @@ def test():
     test_verification()
 
 
-test()
+#test()
