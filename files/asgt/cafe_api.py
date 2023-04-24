@@ -11,6 +11,8 @@
 import os
 import sys
 import json
+from datetime import date
+
 
 current_dir = os.path.dirname(__file__)
 comptes     = os.path.join(current_dir, 'comptes.csv')
@@ -45,7 +47,37 @@ def chercher(repertoire, informations):
 
 def get_other(name,key):
 #cette fontion parcour les comptes ou commandes pour l'utilisateur
-    
+
+    def seperate_line(line, id_present):
+    #cette fonction scinde les informations de ligne commande et/ou imprimme la ligne
+        message = ""
+        line = line.split('|')
+        order_id = line[0]
+        orders = line[2].strip()
+        date = line[3]
+        total = line[4][:-1] +'$'
+
+        if id_present == True:
+            for order in orders.split(','):
+                order = order.split('x')
+                id = int(order[0])
+                quantite = order[1]
+
+                info = get_menu(id, replace=False, status=None)
+                name = info['nom']
+
+                message += name + ': ' + quantite + ' fois. '
+
+            print(order_id, message, 'Date: ',date, 'Total: ', total)
+            
+        else:
+            print(order_id, date, total)
+
+    def print_line(name, line,id_present):
+    #cette fonction imprimme la ligne des comptes ou commandes
+        if name == 'commandes' : seperate_line(line, id_present=id_present)
+        else: print(line)
+
     dir = globals()[name]
     file = open(dir, "r", encoding= 'utf-8')
 
@@ -56,13 +88,15 @@ def get_other(name,key):
 
     for line in file:
         text = line.split('|')
-        matricule = text[0].strip() 
-        try:
-            if id == int(matricule):
-                print(line); return None                                            #imprimmer la ligne de l'ID souhaité
+        identifiant = text[0].strip() 
+
+        try:        
+            if id == int(identifiant):
+                print_line(name, line, id_present=True); return None                #imprimmer la ligne de l'ID souhaité
+            
         except:     
             #on imprimme les lignes une après l'autre s'il n'y a pas d'ID spécifié                                
-            print(line)                                                                                                 
+            print_line(name, line, id_present=False)                                                                                                 
 
     key.isdigit() and print(name[:-1], id,'n\'existe pas')                          #dans le cas où on ne trouve pas l'ID
     
@@ -241,7 +275,6 @@ def POST(matricule, commande):
     prix_total = round(prix_total, 2)
     with open(commandes) as order_file:
         for line in order_file:
-            #if break_line not in line: line = line.strip() + break_line      #on s'assure qu'il y a un saut de ligne à la fin
             pass                                               #pour recuperer la dernière ligne
 
         last_line = line
@@ -249,14 +282,14 @@ def POST(matricule, commande):
           
     orders= open(commandes, "a") 
 
-    date = "2023-04-08"
+    current_date = date.today()
     for items in unavailable:
         commande.remove(items)
 
     commande = ", ".join(commande)
-    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + break_line
+    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + str(current_date) +  ' | ' + str(prix_total) + break_line
 
-    start_index == 4 and orders.write(break_line)                    #pour la premiere modification
+    start_index == 4 and orders.write('\n')                    #pour la premiere modification
     orders.write(order_line)
     print("");print('Commande postée avec succès')
     orders.close
@@ -440,7 +473,7 @@ def take_command(statut):
 
     take_command(statut)
 
-
+take_command(['admin', '1' , '45678'])
 def init(matricule, mot_passe):
 #cette fonction procède à la saisi de la commande si l'utilisateur est actif et s'arrete sinon
 
@@ -467,9 +500,9 @@ def get_inputs():
 def get_arguments():
 #cette fonction recupère les arguments qui vont etre utilisés pour se connecter à l'API
 #sinon, on demande à l'utilisateur de les entrer
+
     if len(sys.argv) == 3:
         try:
-        #ces arguments vont etre utilisés pour se connecter à l'API
             matricule = sys.argv[1]
             mot_passe = sys.argv[2]                            
             init(matricule, mot_passe)
