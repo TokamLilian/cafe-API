@@ -246,30 +246,39 @@ def POST(matricule, commande):
     unavailable = []                                                    #pour la liste des items non disponible
     break_line = '\n'
 
-    def append_unavailable(item):
+    def append_unavailable(item, msg):
         item = "x".join(item)
+
+        if msg == 1 : print('L\'item', item_id, 'n\'est pas disponible')
+        else: print('Mauvaise commande en',item)
+
         unavailable.append(item)
 
     for item in commande:
         try:
 
             item = item.split('x')
-            quantite = int(item[1])
-            item_id = int(item[0])
 
-            info = get_menu(item_id,replace=False, status=None)
+            if len(item) == 2: 
 
-            if info["disponible"] == False : 
-                print('L\'item', item_id, 'n\'est pas disponible')
-                append_unavailable(item)
-            
+                quantite = int(item[1])
+                item_id = int(item[0])
+
+                info = get_menu(item_id, replace=False, status=None)
+
+                if info["disponible"] == False : 
+                    append_unavailable(item, 1)
+                
+                else:
+                    unit_price = info["prix"]
+                    prix_total += unit_price * quantite
+
             else:
-                unit_price = info["prix"]
-                prix_total += unit_price * quantite
+                append_unavailable(item, 0)
 
         except:
-            append_unavailable(item)
-            print('Mauvaise commande en',"x".join(item))
+            #si une commande n'est pas bonne, on l'enleve de la liste avant de continuer
+            append_unavailable(item, 0)
 
     if prix_total == 0: print('Commande non postée');return None
     prix_total = round(prix_total, 2)
