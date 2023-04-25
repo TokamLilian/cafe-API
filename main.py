@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from datetime import date
 from getpass import *
 
 from message_section import *
@@ -232,12 +233,12 @@ def POST(matricule, commande):
           
     orders= open(commandes, "a") 
 
-    date = "2023-04-08"
+    date = date.today()
     for items in unavailable:
         commande.remove(items)
 
     commande = ", ".join(commande)
-    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + '\n'
+    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + str(date) +  ' | ' + str(prix_total) + '\n'
     
     orders.write(order_line)
     print("");print('Commande postée avec succès')
@@ -404,7 +405,7 @@ def take_command(statut):
             break
 
         if instruction == 'POST' and command[1] != 'commandes': 
-            print('Vous ne pouvez que poster des commandes.')
+            print('Vous ne pouvez poster que des commandes.')
             break
         
         if statut[0] != "admin" and command[1] == 'comptes':
