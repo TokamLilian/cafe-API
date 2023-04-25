@@ -473,7 +473,7 @@ def take_command(statut):
 
     take_command(statut)
 
-take_command(['admin', '1' , '45678'])
+
 def init(matricule, mot_passe):
 #cette fonction procède à la saisi de la commande si l'utilisateur est actif et s'arrete sinon
 
