@@ -1,4 +1,11 @@
+import os
+import sys
+
+current_dir = os.path.join(os.path.dirname(__file__), 'asgt')
+sys.path.append(current_dir)
+
 from cafe_api import *
+
 
 def test():
 
@@ -101,5 +108,4 @@ def test():
     test_verification()
 
 
-#test()
-take_command(['admin', '1', '2020202'])
+test()
