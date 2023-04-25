@@ -488,15 +488,17 @@ def init(matricule, mot_passe):
 
     statut = chercher(comptes, [matricule, mot_passe])
 
-    if type(statut) != list: print(statut); return
-
-    else:
-        print('Vous êtes connecté(e)');print("")
+    if type(statut) != list:
+        print(statut)
+        cont = input('Voulez-vous réessayer ? [OUI]/[NON]: ').upper()
+        if cont != 'OUI': return
+        else: print(""); get_inputs()
         
-        if statut[1] == '1': 
-            take_command(statut)
+    elif statut[1] == '1': 
+        print('Vous êtes connecté(e)');print("")
+        take_command(statut)
             
-        else: print('Ce compte n\'est plus actif. Veuillez contacter les administrateurs pour modifier le statut du compte')
+    else: print('Ce compte n\'est plus actif. Veuillez contacter les administrateurs pour modifier le statut du compte')
 
 
 def get_inputs():
