@@ -13,11 +13,9 @@ commandes_dir   = os.path.join(current_dir, 'commandes.csv')
 menu_dir        = os.path.join(current_dir, 'menu.json')
 
 try:
-    with open(comptes_dir, "r", encoding='UTF-8') as comptes:
-        pass
+    comptes = open(comptes_dir, "r", encoding='UTF-8')
 
-    with open(commandes_dir, "r") as commandes:
-        pass
+    commandes = open(commandes_dir, "r")
 
     with open(menu_dir, encoding='utf-8') as json_file:
         menu = json.load(json_file)
@@ -72,97 +70,97 @@ def get_other(name,key):
 
 def get_menu(key, replace, status):
 
-        way = ""
-        def get_id_info(key, sub_category_items):
-            for infomation in sub_category_items: 
-            #information is the sub_category_item information
-                if key == infomation["id"]:
+    way = ""
+    def get_id_info(key, sub_category_items):
+        for infomation in sub_category_items: 
+        #information is the sub_category_item information
+            if key == infomation["id"]:
 
-                    if replace: infomation["disponible"] = status; return way
+                if replace: infomation["disponible"] = status; return way
 
-                    return infomation
-                
-            return False
-
-        def print_key(sub_category):
-            for line in sub_category:
-                msg = str(line["id"]) +" "+ str(line["nom"])   
-                print (msg)     
-
-        if key == 'items' or type(key)== int :
-            way = menu
-            if key == 'items':
-                print('menu') 
-            elif key < 1 or key > 40:
-                print('Mauvais identifiant d\'item')
-                return None
-
-        else:
+                return infomation
             
-                for category in menu:
-                    if way != "": break
-                    if key == category :
-                        way = menu[key]
-                        break
+        return False
 
-                    elif key in menu[category]:
-                        way = menu[category][key]
-                        break
-                    
-                    else:
-                        try:
-                            for sub_category in menu[category]:
-                                if key in menu[category][sub_category]:
-                                    way = menu[category][sub_category][key]
-                                    break
-                        except: pass
+    def print_key(sub_category):
+        for line in sub_category:
+            msg = str(line["id"]) +" "+ str(line["nom"])   
+            print (msg)     
 
-                if way !="": print(key)
+    if key == 'items' or type(key)== int :
+        way = menu
+        if key == 'items':
+            print('menu') 
+        elif key < 1 or key > 40:
+            print('Mauvais identifiant d\'item')
+            return None
 
-                else:print('Chemin non spécifié'); return None
-
-        for item_name in way:                                                       #les differents type d'items
-            if item_name!='items' and type(key)!=int :print(item_name)
-            categories = way[item_name]                                             #les categories pour chaque type
-
-            try:                                                                    #fruit et muffin n'ont pas de sous categories, donc on va acceder à "items" directement
-                sub_category_items = categories["items"]
-
-                if type(key)== int:
-                    found = get_id_info(key, sub_category_items)
-                    if found != False:
-                        return found
-                else:print_key(sub_category_items)
-
-            except: 
-                try:
-                    for category_name in categories:  
-                                                 
-                        sub_category = categories[category_name]                                   #les sous-categories pour chaque categories de type
-                        if type(key)!=int:print(category_name)
-
-                        for sub_category_name in sub_category:
-                            if type(key)!=int and category_name!='items' and sub_category_name != 'items': print(sub_category_name)##
-                            try:
-                                sub_category_items = sub_category[sub_category_name]["items"]      #les types d'items sous chaque sous-categories
-
-                            except: 
-                                    sub_category_items = sub_category["items"]
-                            
-                            if type(key) == int:
-                                found = get_id_info(key, sub_category_items)
-                                if found != False:
-                                    return found
-                                
-                            else: print_key(sub_category_items)
-                                
-                        type(key)!= int and print("")
-                except:
-                        sub_category_items = way["items"]
-                        if type(key)== int:get_id_info(key, sub_category_items)
-                        else:print_key(sub_category_items)
+    else:
         
-            type(key)!= int and print("")
+            for category in menu:
+                if way != "": break
+                if key == category :
+                    way = menu[key]
+                    break
+
+                elif key in menu[category]:
+                    way = menu[category][key]
+                    break
+                
+                else:
+                    try:
+                        for sub_category in menu[category]:
+                            if key in menu[category][sub_category]:
+                                way = menu[category][sub_category][key]
+                                break
+                    except: pass
+
+            if way !="": print(key)
+
+            else:print('Chemin non spécifié'); return None
+
+    for item_name in way:                                                       #les differents type d'items
+        if item_name!='items' and type(key)!=int :print(item_name)
+        categories = way[item_name]                                             #les categories pour chaque type
+
+        try:                                                                    #fruit et muffin n'ont pas de sous categories, donc on va acceder à "items" directement
+            sub_category_items = categories["items"]
+
+            if type(key)== int:
+                found = get_id_info(key, sub_category_items)
+                if found != False:
+                    return found
+            else:print_key(sub_category_items)
+
+        except: 
+            try:
+                for category_name in categories:  
+                                             
+                    sub_category = categories[category_name]                                   #les sous-categories pour chaque categories de type
+                    if type(key)!=int:print(category_name)
+
+                    for sub_category_name in sub_category:
+                        if type(key)!=int and category_name!='items' and sub_category_name != 'items': print(sub_category_name)##
+                        try:
+                            sub_category_items = sub_category[sub_category_name]["items"]      #les types d'items sous chaque sous-categories
+
+                        except: 
+                                sub_category_items = sub_category["items"]
+                        
+                        if type(key) == int:
+                            found = get_id_info(key, sub_category_items)
+                            if found != False:
+                                return found
+                            
+                        else: print_key(sub_category_items)
+                            
+                    type(key)!= int and print("")
+            except:
+                    sub_category_items = way["items"]
+                    if type(key)== int:get_id_info(key, sub_category_items)
+                    else:print_key(sub_category_items)
+    
+        type(key)!= int and print("")
 
 
 def GET(path):
@@ -234,7 +232,7 @@ def POST(matricule, commande):
     if prix_total == 0: print('Commande non postée');return None
     prix_total = round(prix_total, 2)
     
-    for line in commandes:
+    for line in globals()["commandes"]:
         pass                                               #pour recuperer la dernière ligne
 
     last_line = line
@@ -242,12 +240,12 @@ def POST(matricule, commande):
           
     commandes = open(commandes_dir, "a") 
 
-    date = date.today()
+    current_date = date.today()
     for items in unavailable:
         commande.remove(items)
 
     commande = ", ".join(commande)
-    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + str(date) +  ' | ' + str(prix_total) + '\n'
+    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + str(current_date) +  ' | ' + str(prix_total) + '\n'
     
     commandes.write(order_line)
     print("");print('Commande postée avec succès')
@@ -261,8 +259,8 @@ def PUT(path):
         print('Le statut doit être soit actif ou inactif.')
         return None
 
-    name = path[1]+'_dir'
-    dir = globals()[name]    #menu_dir or comptes_dir
+    name = path[1]
+    dir = globals()[name+'_dir']    #menu_dir or comptes_dir
     try:
         id_index = path.index("items") + 1
     except: 
@@ -291,6 +289,7 @@ def PUT(path):
             if new_menu != None:
                 with open(dir, "w", encoding='UTF-8') as menu:
                     json.dump(new_menu, menu, indent=4, ensure_ascii=False)
+                print('Mise à jour éffectuée')
 
             else: print('Aucune modification possible')
 
@@ -308,8 +307,8 @@ def PUT(path):
 
         except: return status_error()
 
-        with open(dir, "r+", encoding= 'utf-8') as file:
-            for line in file:  
+        file = globals()[name]##
+        for line in file:  
 
                 line_id = line.split("|")[0].strip()             #pour trouver l"ID specifié et
                 if id == int(line_id):                           #modifier le champ souhaité
@@ -371,15 +370,6 @@ def verification_command(command):
     
     if ' ' in instruction or instruction not in ['GET', 'POST', 'PUT']:
         return ('Instruction',instruction,'non valide')
-
-    if len(command) < 2 or command[1] not in ['menu', 'commandes', 'comptes']:
-        return ('Le chemin spécifié n\'est pas correct')
-    
-    if instruction == 'PUT' and command[1] == 'commandes': 
-        return ('Impossible de faire cette action.')
-    
-    if instruction == 'POST' and command[1] != 'commandes': 
-        return ('Vous ne pouvez poster que des commandes.')
     
     if instruction == 'POST' or instruction == 'PUT':
         if instruction == 'POST':index = 1
@@ -397,6 +387,15 @@ def verification_command(command):
         command.remove(command[index])
         command.append(rem) 
         command.append(part_command) 
+
+    if len(command) < 2 or command[1] not in ['menu', 'commandes', 'comptes']:
+        return ('Le chemin spécifié n\'est pas correct')
+    
+    if instruction == 'POST' and command[1] != 'commandes': 
+        return ('Vous ne pouvez poster que des commandes.')
+    
+    if instruction == 'PUT' and command[1] == 'commandes': 
+        return ('Impossible de faire cette action.')
 
     return [instruction, command]
 
