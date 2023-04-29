@@ -4,7 +4,7 @@ import json
 from getpass import *
 
 from message_section import *
-#intro_Section()
+#intro_Section() weeeh papa
 
 current_dir = os.path.join(os.path.dirname(__file__), 'files')
 comptes     = os.path.join(current_dir, 'comptes.csv')
