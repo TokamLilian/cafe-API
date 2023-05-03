@@ -1,83 +1,43 @@
-#Ange Lilian Tchomtchoua Tokam, Matricule: 20230129
-#Sarah Jolia Enombo Ngosso, Matricule: 20241121
-#Date de création: 8 Avril 2023
-
-#Le programme cafe-api.py permet d'envoyer des requêtes aux cafés étudiants
-#telles que, recuperer les informations d'un ou plusieurs item(s) diponible(s) et placer une commande
-
-#Ce programme permet aussi à un administrateur de mettre à jour des champs dans le fichier comptes
-#et au staff de le faire pour le menu
-
 import os
 import sys
 import json
-from datetime import date
+from getpass import *
 
+from message_section import *
+#intro_Section() weeeh papa
 
-current_dir = os.path.dirname(__file__)
+current_dir = os.path.join(os.path.dirname(__file__), 'files')
 comptes     = os.path.join(current_dir, 'comptes.csv')
 commandes   = os.path.join(current_dir, 'commandes.csv')
 menu        = os.path.join(current_dir, 'menu.json')
 
 
 def chercher(repertoire, informations):
-#cette fonction verifie si les identifiants entrés sont correctes
-
-    statut = 'Utilisateur non trouvé'
+    statut = 'inexisting_user'
 
     with open(repertoire) as fichier:
         for file_line in fichier:
 
             text = file_line.split("|")
 
-            if informations[0] == text[0].strip():                                  #on verifie le matricule
-                if informations[1] == text[3].strip():                              #verifier si le mot de passe est correct
+            if informations[0] == text[0].strip():
+                if informations[1] == text[3].strip(): 
 
                     user_role = []
                     for word in [text[5], text[6], text[0]]:
                         word = word.strip()
                         user_role.append(word)
 
-                    return user_role                                                #[role, actif, matricule]
+                    return user_role #[role, actif, matricule]
                 
-                else: statut = 'Mauvais mot de passe';  return statut
+                else: statut = 'mdp_error';  return statut
     
     return statut
 
 
 def get_other(name,key):
 #cette fontion parcour les comptes ou commandes pour l'utilisateur
-
-    def seperate_line(line, id_present):
-    #cette fonction scinde les informations de ligne commande et/ou imprimme la ligne
-        message = ""
-        line = line.split('|')
-        order_id = line[0]
-        orders = line[2].strip()
-        date = line[3]
-        total = line[4][:-1] +'$'
-
-        if id_present == True:
-            for order in orders.split(','):
-                order = order.split('x')
-                id = int(order[0])
-                quantite = order[1]
-
-                info = get_menu(id, replace=False, status=None)
-                name = info['nom']
-
-                message += name + ': ' + quantite + ' fois. '
-
-            print(order_id, message, 'Date: ',date, 'Total: ', total)
-            
-        else:
-            print(order_id, date, total)
-
-    def print_line(name, line,id_present):
-    #cette fonction imprimme la ligne des comptes ou commandes
-        if name == 'commandes' : seperate_line(line, id_present=id_present)
-        else: print(line)
-
+    
     dir = globals()[name]
     file = open(dir, "r", encoding= 'utf-8')
 
@@ -88,26 +48,21 @@ def get_other(name,key):
 
     for line in file:
         text = line.split('|')
-        identifiant = text[0].strip() 
+        matricule = text[0].strip() 
+        try:
+            if id == int(matricule):
+                print(line); return None
+        except:
+            print(line)
 
-        try:        
-            if id == int(identifiant):
-                print_line(name, line, id_present=True); return None                #imprimmer la ligne de l'ID souhaité
-            
-        except:     
-            #on imprimme les lignes une après l'autre s'il n'y a pas d'ID spécifié                                
-            print_line(name, line, id_present=False)                                                                                                 
-
-    key.isdigit() and print(name[:-1], id,'n\'existe pas')                          #dans le cas où on ne trouve pas l'ID
+    key.isdigit() and print(name[:-1], id,'n\'existe pas')
     
 
 def get_menu(key, replace, status):
-#cette fonction parcour tout les elements d'un dictionnaire
 
     def get_id_info(key, sub_category_items):
-    #cette fonction retourne les information de l'item par son ID
         for infomation in sub_category_items: 
-        #information est les données sub_category_item
+        #information is the sub_category_item information
             if key == infomation["id"]:
 
                 if replace: infomation["disponible"] = status; return way
@@ -117,7 +72,6 @@ def get_menu(key, replace, status):
         return False
 
     def print_key(sub_category):
-    #cette fonction imprimme les informations sous une sous-categorie
         for line in sub_category:
             msg = str(line["id"]) +" "+ str(line["nom"])   
             print (msg)     
@@ -125,14 +79,15 @@ def get_menu(key, replace, status):
     with open(menu, encoding='utf-8') as json_file:
         the_menu = json.load(json_file)
         way = ""
-        if key == 'items' or type(key)== int :                                        #pour imprimmer tout le menu ou rechercher un ID,
-            way = the_menu                                                            #on parcour tout le menu 
+        if key == 'items' or type(key)== int :
+            way = the_menu
             if key == 'items':
                 print('menu') 
             elif key < 1 or key > 40:
-                return 'Mauvais identifiant d\'item'
+                print('Mauvais identifiant d\'item')
+                return None
 
-        else:                                                                         #on cherche la categorie ou sous-categorie à parcourir
+        else:
             
                 for category in the_menu:
                     if way != "": break
@@ -154,14 +109,14 @@ def get_menu(key, replace, status):
 
                 if way !="": print(key)
 
-                else:return 'Chemin non spécifié'
+                else:print('Chemin non spécifié'); return None
 
         for item_name in way:                                                       #les differents type d'items
             if item_name!='items' and type(key)!=int :print(item_name)
             categories = way[item_name]                                             #les categories pour chaque type
 
-            try:                                                                    #fruit et muffin n'ont pas de sous categories, 
-                sub_category_items = categories["items"]                            #donc on va acceder à "items" directement
+            try:                                                                    #fruit et muffin n'ont pas de sous categories, donc on va acceder à "items" directement
+                sub_category_items = categories["items"]
 
                 if type(key)== int:
                     found = get_id_info(key, sub_category_items)
@@ -182,7 +137,7 @@ def get_menu(key, replace, status):
                                 sub_category_items = sub_category[sub_category_name]["items"]      #les types d'items sous chaque sous-categories
 
                             except: 
-                                    sub_category_items = sub_category["items"]                     #on recupere les items de la categorie
+                                    sub_category_items = sub_category["items"]
                             
                             if type(key) == int:
                                 found = get_id_info(key, sub_category_items)
@@ -192,7 +147,6 @@ def get_menu(key, replace, status):
                             else: print_key(sub_category_items)
                                 
                         type(key)!= int and print("")
-
                 except:
                         sub_category_items = way["items"]
                         if type(key)== int:get_id_info(key, sub_category_items)
@@ -210,11 +164,9 @@ def GET(path):
     try:
         id = int(key)
         if name == 'menu':
-            if path[path.index(name)+1] != 'items': print('Chemin specifié incorrect'); return None     #pour s'assurer qu'on veut get items/id
+            if path[path.index(name)+1] != 'items': print('Chemin specifié incorrect'); return None     ##pour s'assurer qu'on veut get items/id
             info = get_menu(id,replace=False, status=None)
 
-            if type(info) != dict: print(info); return None
- 
             if info['disponible'] == True:
                 disponibilite = 'disponible'
             else: disponibilite = 'Non disponible'
@@ -225,7 +177,7 @@ def GET(path):
             get_other(name, id)
 
     except:
-            if name == 'menu' and key != 'items' or key== '':            #'menu' doit prendre items comme chemin finale s'il n'y a pas de ID
+            if name == 'menu' and key != 'items' or key== '':            #il n'y a que 'menu' qui prend des chaines de caracteres comme chemin
                 print('Chemin specifié incorrect')
                 return None
             
@@ -234,8 +186,7 @@ def GET(path):
 
             else:    
                 key = path[2]
-                info = get_menu(key, replace=False, status=None)
-                info != None and print(info)
+                get_menu(key, replace=False, status=None)
         
 
 def POST(matricule, commande):
@@ -244,41 +195,31 @@ def POST(matricule, commande):
     prix_total = 0
     commande = commande.split(" ")
     unavailable = []                                                    #pour la liste des items non disponible
-    break_line = '\n'
 
-    def append_unavailable(item, msg):
+    def append_unavailable(item):
         item = "x".join(item)
-
-        if msg == 1 : print('L\'item', item_id, 'n\'est pas disponible')
-        else: print('Mauvaise commande en',item)
-
         unavailable.append(item)
 
     for item in commande:
         try:
 
             item = item.split('x')
+            quantite = int(item[1])
+            item_id = int(item[0])
 
-            if len(item) == 2: 
+            info = get_menu(item_id,replace=False, status=None)
 
-                quantite = int(item[1])
-                item_id = int(item[0])
-
-                info = get_menu(item_id, replace=False, status=None)
-
-                if info["disponible"] == False : 
-                    append_unavailable(item, 1)
-                
-                else:
-                    unit_price = info["prix"]
-                    prix_total += unit_price * quantite
-
+            if info["disponible"] == False : 
+                print('L\'item', item_id, 'n\'est pas disponible')
+                append_unavailable(item)
+            
             else:
-                append_unavailable(item, 0)
+                unit_price = info["prix"]
+                prix_total += unit_price * quantite
 
         except:
-            #si une commande n'est pas bonne, on l'enleve de la liste avant de continuer
-            append_unavailable(item, 0)
+            append_unavailable(item)
+            print('Mauvaise commande en',"x".join(item))
 
     if prix_total == 0: print('Commande non postée');return None
     prix_total = round(prix_total, 2)
@@ -291,14 +232,13 @@ def POST(matricule, commande):
           
     orders= open(commandes, "a") 
 
-    current_date = date.today()
+    date = "2023-04-08"
     for items in unavailable:
         commande.remove(items)
 
     commande = ", ".join(commande)
-    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + str(current_date) +  ' | ' + str(prix_total) + break_line
-
-    start_index == 4 and orders.write('\n')                    #pour la premiere modification
+    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + date +  ' | ' + str(prix_total) + '\n'
+    
     orders.write(order_line)
     print("");print('Commande postée avec succès')
     orders.close
@@ -334,16 +274,15 @@ def PUT(path):
 
             if field_status[1] == '1': status = True
             elif field_status[1] == '0': status = False 
-            else: print('Disponible doit être =1 ou 0');return None
+            else: print('Disponible doit être = 1 ou 0');return None
 
             new_menu = get_menu(id, replace=True, status=status)
             if new_menu != None:
-                print('Mise à jour éffectuée')
                 with open(dir, "w", encoding='UTF-8') as the_menu:
                     json.dump(new_menu, the_menu, indent=4, ensure_ascii=False)
             else: print('Aucune modification possible')
 
-        except: print('Disponible doit être =1 ou 0');return None
+        except: print('Disponible doit être = 1 ou 0');return None
 
     else:
         file = open(dir, "r+", encoding= 'utf-8')
@@ -380,15 +319,13 @@ def PUT(path):
 
 
 def process(instruction, path, matricule):
-#cette fonction appelle GET, PUT ou POST
-
     callee = globals()[instruction]
 
     if instruction == 'POST':
         last = len(path) - 1
         commande = path[last]
            
-        callee(matricule, commande)                                              #on a besoin du matricule pour poster une commande
+        callee(matricule, commande)
     else:
         callee(path)
 
@@ -396,12 +333,10 @@ def process(instruction, path, matricule):
 
 
 def verification_command(command):
-#cette fonction verifie si une commande est valide
 
     command = command.split('/')
 
     for _ in range (len(command)):
-    #on enleve les espace entre les barres obliques
         word = command[0]
         command.remove(word)
         word = word.strip()
@@ -412,21 +347,20 @@ def verification_command(command):
     command.remove(instruction)
         
     if ' ' in instruction or instruction not in ['GET', 'POST', 'PUT']:
-        return 'Instruction '+instruction+' non valide'
+        print('Instruction',instruction,'non valide'); return None
 
     if instruction == 'POST' or instruction == 'PUT':
-    #POST et PUT prennent des argument qui vont etre séparés du reste d'une façaon spécifique 
         if instruction == 'POST':index = 1
         elif command[1] == 'menu': index = 3
         else: index = 2
 
         try:
             part_command = command[index].split(" ")
-            if part_command ==[''] : return 'Besoin d\'une valeur pour '+ instruction
+            if part_command ==[''] : print('Besoin d\'une valeur pour', instruction); return None
         except:
-            return 'Chemin non spécifié'
+            print('Chemin non spécifié')
+            return None
 
-        #on scinde de les arguments respectifs
         rem = part_command[0]
         part_command.remove(rem)
         part_command = " ".join(part_command)
@@ -438,19 +372,26 @@ def verification_command(command):
 
 
 def take_command(statut):
-#cette fonction scinde la command de l'utilisateur recupere aussi le mots-clé
     
-    print("Entrer une commande souhaitée ou Entrer FIN pour terminer l'execution.")
+    print("""Saisissez -h ou -help pour voir le message d\'aide pour votre statut.
+    Entrer une commande souhaitée, ou              
+    Entrer FIN pour terminer l'execution.""")
 
     while True:
         print('')
         command = input('>_').strip()
 
-        if command == 'FIN': print('Vous êtes déconnecté'); return None
+        if command == "-help" or command == '-h':
+            help = 'guides_' + statut[0]
+            callee = globals()[help]
+            callee()
+            break
+
+        if command == 'FIN' or command == 'fin': return None
         if "/" not in command: print('Entrez une commande valide');break
 
         line = verification_command(command)
-        if type(line) != list: print(line); break
+        if line == None: break
         instruction = line[0]
         command = line[1]
 
@@ -484,37 +425,32 @@ def take_command(statut):
 
 
 def init(matricule, mot_passe):
-#cette fonction procède à la saisi de la commande si l'utilisateur est actif et s'arrete sinon
 
     statut = chercher(comptes, [matricule, mot_passe])
 
-    if type(statut) != list:
-        print(statut)
-        cont = input('Voulez-vous réessayer ? [OUI]/[NON]: ').upper()
-        if cont != 'OUI': return
-        else: print(""); get_inputs()
-        
-    elif statut[1] == '1': 
+    if statut == 'mdp_error': print('Mauvais mot de passe')
+
+    elif statut == 'inexisting_user': print('Utilisateur non trouvé')
+
+    else:
         print('Vous êtes connecté(e)');print("")
-        take_command(statut)
+        
+        if statut[1] == '1': 
+            take_command(statut)
             
-    else: print('Ce compte n\'est plus actif. Veuillez contacter les administrateurs pour modifier le statut du compte')
+        else: print('Ce compte n\'est plus actif. Veuillez contacter les administrateurs pour modifier le statut du compte')
 
 
 def get_inputs():
-#cette fonction recupère les entrés pour le login
     matricule = input('Entrer votre matricule: ').strip()
-    mot_passe = input('Entrer votre mot de passe: ')
+    mot_passe = getpass('Entrer votre mot de passe: ')
     init(matricule, mot_passe)
 
 
 def get_arguments():
-#cette fonction recupère les arguments qui vont etre utilisés pour se connecter à l'API
-#sinon, on demande à l'utilisateur de les entrer
-
     if len(sys.argv) == 3:
         try:
-            matricule = sys.argv[1]
+            matricule = sys.argv[1]                            #ces arguments vont etre utilisés pour se connecter à l'API
             mot_passe = sys.argv[2]                            
             init(matricule, mot_passe)
 
@@ -523,108 +459,4 @@ def get_arguments():
 
     else: get_inputs()
 
-get_arguments()
-
-
-def test():
-
-    def test_chercher():
-        def test_chercher1():
-            matricule = '20230129'
-            mot_passe = 'm@mi22'
-            assert chercher(comptes, [matricule, mot_passe]) == 'Utilisateur non trouvé'
-
-        def test_chercher2():
-            matricule = '20031977'
-            mot_passe = 'vqdv@5'
-            assert chercher(comptes, [matricule, mot_passe]) == 'Mauvais mot de passe'
-
-        def test_chercher3():
-            matricule = '20209230'
-            mot_passe = 'rnPass_25'
-            assert chercher(comptes, [matricule, mot_passe]) == ['public', '0', '20209230'], 'Mauvais parametre'
-
-        def test_chercher4():
-            matricule = '1052138'
-            mot_passe = 'mpPass_26'
-            assert chercher(comptes, [matricule, mot_passe]) == ['staff', '1', '1052138' ], 'Mauvais parametre'
-
-        def test_chercher5():
-            matricule = '20458102'
-            mot_passe = 'rlPass_30'
-            assert chercher(comptes, [matricule, mot_passe]) == ['admin', '1', '20458102'], 'Mauvais parametre'
-
-        test_chercher1()
-        test_chercher2()
-        test_chercher3()
-        test_chercher4()
-        test_chercher5()
-    
-    test_chercher()
-
-
-    def test_get_menu():
-
-        def test_get_nom():
-            key = 2
-            assert get_menu(key, replace=False, status=[])['nom'] == 'Café filtre (grand)'
-
-        def test_get_none():
-            key = 46
-            assert (get_menu(key, replace=False, status=[])) == 'Mauvais identifiant d\'item'
-
-        def test_get_prix():
-            key = 24
-            assert get_menu(key, replace=False, status=[])['prix'] == 2.7
-        
-        def test_get_disponible():
-            key = 8
-            assert get_menu(key, replace=False, status=[])['disponible'] == True
-
-        def test_get_len():
-            key = 35
-            assert len(get_menu(key, replace=False, status=[])) == 4
-
-
-        test_get_nom()
-        test_get_none()
-        test_get_prix()
-        test_get_disponible()
-        test_get_len()  
-
-    test_get_menu()
-
-
-    def test_verification():
-
-        def test_verification_GET_menu():
-            command = 'GET /api/menu/items'
-            assert verification_command(command) == ['GET', ['api', 'menu', 'items']]
-
-        def test_verification_GET_comptes():
-            command = 'GET/api / comptes'
-            assert verification_command(command) == ['GET', ['api', 'comptes']]
-
-        def test_verification_POST():
-            command = 'POST /api/commandes 4x5 32x4'
-            assert verification_command(command) == ['POST', ['api', 'commandes', '4x5 32x4']]
-
-        def test_verification_PUT():
-            command = 'PUT /api/menu/items/25 disponible=1'
-            assert verification_command(command) == ['PUT', ['api', 'menu', 'items', '25', 'disponible=1']]
-
-        def test_verification_None():
-            command = 'put /api/menu/cafe/items'
-            assert verification_command(command) == 'Instruction put non valide'
-
-
-        test_verification_GET_menu()
-        test_verification_GET_comptes()
-        test_verification_POST()
-        test_verification_PUT()
-        test_verification_None()
-
-    test_verification()
-
-
-#test()
+#get_arguments()
