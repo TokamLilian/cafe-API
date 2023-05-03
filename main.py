@@ -5,7 +5,7 @@ from datetime import date
 from getpass import *
 
 from message_section import *
-#intro_Section()
+intro_Section()
 
 current_dir = os.path.join(os.path.dirname(__file__), 'files')
 comptes_dir     = os.path.join(current_dir, 'comptes.csv')
@@ -15,7 +15,7 @@ menu_dir        = os.path.join(current_dir, 'menu.json')
 try:
     comptes = open(comptes_dir, "r", encoding='UTF-8')
 
-    commandes = open(commandes_dir, "r")
+    commandes = open(commandes_dir, "r", encoding='UTF-8')
 
     with open(menu_dir, encoding='utf-8') as json_file:
         menu = json.load(json_file)
@@ -24,48 +24,96 @@ except:
     print('File error')
 
 def chercher(informations):
-        statut = 'inexisting_user'
+#cette fonction verifie si les identifiants entrés sont correctes
 
-        for file_line in comptes:
+    statut = 'Utilisateur non trouvé'
+
+    with open(comptes_dir) as fichier:
+        for file_line in fichier:
 
             text = file_line.split("|")
 
             if informations[0] == text[0].strip():
-                if informations[1] == text[3].strip(): 
+                if informations[1] == text[3].strip():
 
                     user_role = []
                     for word in [text[5], text[6], text[0]]:
                         word = word.strip()
                         user_role.append(word)
 
-                    return user_role #[role, actif, matricule]
+                    return user_role                                                #[role, actif, matricule]
                 
-                else: statut = 'mdp_error';  return statut
-    
+                else: statut = 'Mauvais mot de passe';  return statut
+        
         return statut
 
 
 def get_other(name,key):
 #cette fontion parcour les comptes ou commandes pour l'utilisateur
     
-    dir = globals()[name]
-    #file = open(dir, "r", encoding= 'utf-8')
+    def order_seperate(line, message, id_present):
+    #cette fonction scinde les informations de ligne commande et/ou imprimme la ligne
+        order_id = line[0]
+        orders = line[2].strip()
+        date = line[3]
+        total = line[4][:-1] +'$'
 
-    if key.isdigit(): id = int(key)
-                                         
-    elif key != name: print('«'+key+'»','invalide'); return None
-    #lorsqu'il n'y a pas d'entier qui a été spécifié
+        if id_present:
+            for order in orders.split(','):
+                order = order.split('x')
+                id = int(order[0])
+                quantite = order[1]
 
-    for line in dir:
-        text = line.split('|')
-        matricule = text[0].strip() 
-        try:
-            if id == int(matricule):
-                print(line); return None
-        except:
-            print(line)
+                info = get_menu(id, replace=False, status=None)
+                name = info['nom']
 
-    key.isdigit() and print(name[:-1], id,'n\'existe pas')
+                message += name + ': ' + quantite + ' fois. '
+
+            print(order_id, message, 'Date: ',date, 'Total: ', total)
+            
+        else:
+            print(order_id, date, total)
+
+    def account_seperate(line, id_present):
+        account_id = line[0]
+        first_name = line[1].strip()
+        last_name  = line[2].strip()
+
+        email = line[4].strip()
+        role = line[5].strip()
+        activity = line[6].strip()
+        if activity == '1': msg = 'active'
+        else: msg = 'incative'
+
+        if id_present:
+            print(account_id, 'Name:', first_name+',', 'Email:', email, 'is', role, 'and', msg)
+        else:
+            print('ID:', account_id, 'Full name:', first_name, last_name)
+
+    def print_line(name, line,id_present):
+    #cette fonction imprimme la ligne des comptes ou commandes
+        message = ""
+        line = line.split('|')
+        if name == 'commandes' : order_seperate(line, message, id_present=id_present)
+        else: account_seperate(line, id_present=id_present)
+    
+    callee = globals()[name+'_dir']
+    with open (callee, encoding='utf-8') as file:
+
+        if key.isdigit(): id = int(key)
+                                            
+        elif key != name: print('«'+key+'»','invalide'); return None            ##convert to single return
+        #lorsqu'il n'y a pas d'entier qui a été spécifié
+
+        for line in file:
+            text = line.split('|')
+            matricule = text[0].strip() 
+            try:
+                if id == int(matricule):
+                    print_line(name, line, id_present=True); return None       ##convert to single return
+            except:
+                print_line(name, line, id_present=False)
+        key.isdigit() and print(name[:-1], id,'n\'existe pas')
     
 
 def get_menu(key, replace, status):
@@ -92,8 +140,7 @@ def get_menu(key, replace, status):
         if key == 'items':
             print('menu') 
         elif key < 1 or key > 40:
-            print('Mauvais identifiant d\'item')
-            return None
+            return 'Mauvais identifiant d\'item'
 
     else:
         
@@ -117,7 +164,7 @@ def get_menu(key, replace, status):
 
             if way !="": print(key)
 
-            else:print('Chemin non spécifié'); return None
+            else: return 'Chemin non spécifié'
 
     for item_name in way:                                                       #les differents type d'items
         if item_name!='items' and type(key)!=int :print(item_name)
@@ -172,21 +219,22 @@ def GET(path):
     try:
         id = int(key)
         if name == 'menu':
-            if path[path.index(name)+1] != 'items': print('Chemin specifié incorrect'); return None     ##pour s'assurer qu'on veut get items/id
+            if path[path.index(name)+1] != 'items':                  #pour s'assurer qu'on veut get items/id
+                 print('Chemin specifié incorrect'); return None     ##convert to single return
             info = get_menu(id,replace=False, status=None)
 
             if info['disponible'] == True:
                 disponibilite = 'disponible'
-            else: disponibilite = 'pas disponible'
+            else: disponibilite = 'Non disponible'
 
-            print(info['id'],'|',info['nom'],'|','Prix:',str(info['prix'])+'$','|',disponibilite)
+            print(info['id'], info['nom'], 'Prix:',str(info['prix'])+'$', 'est',disponibilite)
 
         else:
             get_other(name, id)
 
     except:
             if name == 'menu' and key != 'items' or key== '':            #il n'y a que 'menu' qui prend des chaines de caracteres comme chemin
-                print('Chemin specifié incorrect')
+                print('Chemin specifié incorrect')                       #convert to single return
                 return None
             
             if name != 'menu':
@@ -194,7 +242,8 @@ def GET(path):
 
             else:    
                 key = path[2]
-                get_menu(key, replace=False, status=None)
+                info = get_menu(key, replace=False, status=None)
+                info != None and print(info)
         
 
 def POST(matricule, commande):
@@ -204,32 +253,40 @@ def POST(matricule, commande):
     commande = commande.split(" ")
     unavailable = []                                                    #pour la liste des items non disponible
 
-    def append_unavailable(item):
+    def append_unavailable(item, msg):
         item = "x".join(item)
+
+        if msg == 1 : print('L\'item', item_id, 'n\'est pas disponible')
+        else: print('Mauvaise commande en',item)
+
         unavailable.append(item)
 
     for item in commande:
         try:
 
             item = item.split('x')
-            quantite = int(item[1])
-            item_id = int(item[0])
+            if len(item) == 2: 
 
-            info = get_menu(item_id,replace=False, status=None)
+                quantite = int(item[1])
+                item_id = int(item[0])
 
-            if info["disponible"] == False : 
-                print('L\'item', item_id, 'n\'est pas disponible')
-                append_unavailable(item)
-            
+                info = get_menu(item_id, replace=False, status=None)
+
+                if info["disponible"] == False : 
+                    append_unavailable(item, 1)
+                
+                else:
+                    unit_price = info["prix"]
+                    prix_total += unit_price * quantite
+
             else:
-                unit_price = info["prix"]
-                prix_total += unit_price * quantite
+                append_unavailable(item, 0)
 
         except:
-            append_unavailable(item)
-            print('Mauvaise commande en',"x".join(item))
+            #si une commande n'est pas bonne, on l'enleve de la liste avant de continuer
+            append_unavailable(item, 0)
 
-    if prix_total == 0: print('Commande non postée');return None
+    if prix_total == 0: print('Commande non postée');return None                        ##convert to single return
     prix_total = round(prix_total, 2)
     
     for line in globals()["commandes"]:
@@ -238,25 +295,26 @@ def POST(matricule, commande):
     last_line = line
     start_index = int(last_line.split('|')[0]) + 1         #le numero de la commande à poster
           
-    commandes = open(commandes_dir, "a") 
+    with open(commandes_dir, "a") as orders:
 
-    current_date = date.today()
-    for items in unavailable:
-        commande.remove(items)
+        current_date = date.today()
+        for items in unavailable:
+            commande.remove(items)
 
-    commande = ", ".join(commande)
-    order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + str(current_date) +  ' | ' + str(prix_total) + '\n'
+        commande = ", ".join(commande)
+        order_line = str(start_index) + '  | ' + str(matricule) +  ' | ' + str(commande) +  ' | ' + str(current_date) +  ' | ' + str(prix_total) + '\n'
+        
+        start_index == 4 and orders.write('\n')
+        orders.write(order_line)
     
-    commandes.write(order_line)
-    print("");print('Commande postée avec succès')
-    commandes.close()
+    print("");print('Commande postée avec succès')              ##convert to single return
 
 
 def PUT(path):
 #cette fonction met à jour la valeur du champ d'un chemin donné
 
     def status_error():
-        print('Le statut doit être soit actif ou inactif.')
+        print('Le statut doit être soit actif ou inactif.')                 ##convert to single return
         return None
 
     name = path[1]
@@ -273,27 +331,29 @@ def PUT(path):
         field_status_index = id_index + 1
         field_status = path[field_status_index]
 
-    except: print('Veuillez entrer un ID valide');return None
+    except: print('Veuillez entrer un ID valide'); return None              ##convert to single return
 
     if name == "menu":
         try:
             field_status = field_status.split("=")
-            if field_status[0] != 'disponible':print('«'+field_status[0]+'»','Invalide');return None
+            if field_status[0] != 'disponible':print('«'+field_status[0]+'»','Invalide');return None      ##convert to single return
 
             if field_status[1] == '1': status = True
             elif field_status[1] == '0': status = False 
-            else: print('Disponible doit être = 1 ou 0');return None
+            else: print('Disponible doit être = 1 ou 0'); return None                                     ##convert to single return
 
             new_menu = get_menu(id, replace=True, status=status)
 
-            if new_menu != None:
-                with open(dir, "w", encoding='UTF-8') as menu:
-                    json.dump(new_menu, menu, indent=4, ensure_ascii=False)
-                print('Mise à jour éffectuée')
+            if type(new_menu) == dict:
+                with open(dir, "w", encoding='UTF-8') as menu_file:
+                    json.dump(new_menu, menu_file, indent=4, ensure_ascii=False)
+                print('Mise à jour éffectuée'); return None                                               ##convert to singel return
+            
+            else: 
+                print(new_menu)
+                #print('Aucune modification possible'); return None                                       ##convert to singel return      
 
-            else: print('Aucune modification possible')
-
-        except: print('Disponible doit être = 1 ou 0');return None
+        except: print('Disponible doit être = 1 ou 0'); return None                                       ##convert to single return
 
     else:
         accounts_list = []
@@ -307,8 +367,8 @@ def PUT(path):
 
         except: return status_error()
 
-        file = globals()[name]##
-        for line in file:  
+        with open(dir, "r", encoding="utf-8") as file:
+            for line in file:  
 
                 line_id = line.split("|")[0].strip()             #pour trouver l"ID specifié et
                 if id == int(line_id):                           #modifier le champ souhaité
@@ -319,25 +379,24 @@ def PUT(path):
                     new_status = ' '+str(status)+'\n'
 
                     if int(old_status) == status:
-                        print('Aucun changement possible')
+                        print('Aucun changement possible')      ##convert to single return
                         return None
 
                     else: line[end_index] = new_status
 
                     line = "|".join(line)
-                    print('Mise à jour éffectuée'); edit = True
+                    edit = True
 
                 accounts_list.append(line)
 
         if edit:                                                                
             #on réécrit le contenu de accounts_list dans comptes.csv s'il y a eu une modification
-            for user in accounts_list:
-                comptes.write(user)
-            comptes.close()
-
-        else: print(id, 'N\'existe pas')
-
-    return
+            with open(dir, "w", encoding="utf-8") as account_file:
+                for user in accounts_list:
+                    account_file.write(user)
+            print('Mise à jour éffectuée'); return None                     ##convert to single return
+        
+        else: print(id, 'N\'existe pas'); return None                       ##convert to single return
 
 
 def process(instruction, path, matricule):
@@ -366,10 +425,16 @@ def verification_command(command):
     instruction = command.pop(0)
         
     if command[0] != 'api':
-        return ('Besoin d\'un chemin origin de \"api\" pour continuer') 
+        return 'Besoin d\'un chemin origin de \"api\" pour continuer'
     
     if ' ' in instruction or instruction not in ['GET', 'POST', 'PUT']:
-        return ('Instruction',instruction,'non valide')
+        return 'Instruction '+str(instruction)+' non valide'
+    
+    if instruction == 'POST' and 'commandes' not in command[1]: 
+        return 'Vous ne pouvez poster que des commandes.'
+    
+    if instruction == 'PUT' and 'commandes' in command[1]: 
+        return 'Impossible de faire cette action.'
     
     if instruction == 'POST' or instruction == 'PUT':
         if instruction == 'POST':index = 1
@@ -378,9 +443,9 @@ def verification_command(command):
 
         try:
             part_command = command[index].split(" ")
-            if part_command ==[''] : print('Besoin d\'une valeur pour', instruction); return None
+            if part_command ==[''] : return 'Besoin d\'une valeur pour ' + instruction
         except:
-            return ('Chemin non spécifié')
+            return 'Chemin non spécifié'
 
         rem = part_command.pop(0)
         part_command = " ".join(part_command)
@@ -389,14 +454,8 @@ def verification_command(command):
         command.append(part_command) 
 
     if len(command) < 2 or command[1] not in ['menu', 'commandes', 'comptes']:
-        return ('Le chemin spécifié n\'est pas correct')
+        return 'Le chemin spécifié n\'est pas correct'
     
-    if instruction == 'POST' and command[1] != 'commandes': 
-        return ('Vous ne pouvez poster que des commandes.')
-    
-    if instruction == 'PUT' and command[1] == 'commandes': 
-        return ('Impossible de faire cette action.')
-
     return [instruction, command]
 
 
@@ -419,42 +478,42 @@ def take_command(statut):
         if command == 'FIN' or command == 'fin': return None
         if "/" not in command: print('Entrez une commande valide');break
 
-        line = verification_command(command)
-        if type(line) != list:
-            print(line)
-            return None
-        
-        instruction = line[0]
-        command = line[1]
-
-        if statut[0] != "admin" and command[1] == 'comptes':
-            print('Vous n\'avez pas le droit d\'acceder aux', command[1])
+        command = verification_command(command)
+        if type(command) != list:
+            print(command)
             break
         
-        if statut[0] == "public" and (instruction == 'GET' and command[1] == 'commandes' or instruction == 'PUT'):
+        instruction = command.pop(0)
+        
+        if statut[0] != "admin" and command[0][1] == 'comptes':
+            print('Vous n\'avez pas le droit d\'acceder aux', command[0][1])
+            break
+        
+        if statut[0] == "public" and (instruction == 'GET' and command[0][1] == 'commandes' or instruction == 'PUT'):
             print('Vous n\'avez pas droit à cette fonctionalité')
             break
 
-        process(instruction, command, statut[2])
+        process(instruction, command[0], statut[2])
 
     take_command(statut)
 
 
 def init(matricule, mot_passe):
+#cette fonction procède à la saisi de la commande si l'utilisateur est actif et s'arrete sinon
 
     statut = chercher([matricule, mot_passe])
 
-    if statut == 'mdp_error': print('Mauvais mot de passe')
-
-    elif statut == 'inexisting_user': print('Utilisateur non trouvé')
-
-    else:
-        print('Vous êtes connecté(e)');print("")
+    if type(statut) != list:
+        print(statut)
+        cont = input('Voulez-vous réessayer ? [OUI]/[NON]: ').upper()
+        if cont != 'OUI': return
+        else: print(""); get_inputs()
         
-        if statut[1] == '1': 
-            take_command(statut)
+    elif statut[1] == '1': 
+        print('Vous êtes connecté(e)');print("")
+        take_command(statut)
             
-        else: print('Ce compte n\'est plus actif. Veuillez contacter les administrateurs pour modifier le statut du compte')
+    else: print('Ce compte n\'est plus actif. Veuillez contacter les administrateurs pour modifier le statut du compte')
 
 
 def get_inputs():
@@ -475,4 +534,4 @@ def get_arguments():
 
     else: get_inputs()
 
-#get_arguments()
+get_arguments()
