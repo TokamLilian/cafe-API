@@ -6,10 +6,11 @@ from getpass import *
 from message_section import *
 #intro_Section() weeeh papa
 
-current_dir = os.path.join(os.path.dirname(__file__), 'files')
-comptes     = os.path.join(current_dir, 'comptes.csv')
-commandes   = os.path.join(current_dir, 'commandes.csv')
-menu        = os.path.join(current_dir, 'menu.json')
+current_dir = os.path.dirname(__file__)
+path        = os.path.abspath(os.path.join(current_dir, os.pardir))
+comptes     = os.path.join(path, 'comptes.csv')
+commandes   = os.path.join(path, 'commandes.csv')
+menu        = os.path.join(path, 'menu.json')
 
 
 def chercher(repertoire, informations):
